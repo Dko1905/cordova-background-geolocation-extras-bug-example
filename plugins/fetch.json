@@ -1,0 +1,18 @@
+{
+  "cordova-background-geolocation-lt": {
+    "source": {
+      "type": "registry",
+      "id": "cordova-background-geolocation-lt@4.7.1"
+    },
+    "is_top_level": true,
+    "variables": {}
+  },
+  "cordova-plugin-androidx-adapter": {
+    "source": {
+      "type": "registry",
+      "id": "cordova-plugin-androidx-adapter"
+    },
+    "is_top_level": true,
+    "variables": {}
+  }
+}
