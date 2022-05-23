@@ -4,20 +4,39 @@ app.controller('PageController', function($scope) {
 	const geo = window.BackgroundGeolocation;
 	$scope.status = "not ready";
 	let priv = {};
+	$scope.routeId = null;
 
-	priv.config = {
-		desiredAccuracy: geo.DESIRED_ACCURACY_HIGH,
-		reset: false,
-		stopOnTerminate: false,
-		startOnBoot: false,
-		extras: {routeId: "default"}
+
+	this.$onInit = async function() {
+		const defaultConfig = {
+			desiredAccuracy: geo.DESIRED_ACCURACY_HIGH,
+			reset: false, // Only use config if no persisted configuration exists
+			stopOnTerminate: false,
+			startOnBoot: false,
+			extras: {routeId: null, type: null}
+		};
+		// Use default config if no persistent config exists
+		const state = await geo.ready(defaultConfig);
+		console.log(`>> Ready ${state.enabled} ${JSON.stringify(state.extras)}`);
+
+		// Reset config to default config if not currently tracking
+		if (!state.enabled) {
+			await geo.reset();
+			await geo.setConfig(defaultConfig);
+		}
+
+		// Listen to onLocation events
+		$scope.listenToLocation();
 	};
 
 	$scope.start = async function() {
-		let state = await geo.ready(priv.config);
-		console.log(`>> Ready ${state.enabled} ${JSON.stringify(state.extras)}`);
-		$scope.listenToLocation();
-		$scope.changeRouteId();
+		// Set routeId and type
+		$scope.routeId = uuid.v4();
+		const config = {
+			extras: {routeId: $scope.routeId, type: 'start'}
+		};
+		await geo.setConfig(config);
+		await geo.destroyLocations();
 		await geo.start();
 		console.log('>> Started');
 		await geo.changePace(true);
@@ -25,21 +44,24 @@ app.controller('PageController', function($scope) {
 	};
 
 	$scope.pause = async function() {
-		$scope.changeRouteId();
-		$scope.insertLocation();
+		const config = {
+			extras: {routeId: $scope.routeId, type: 'pause'}
+		};
+		const state = await geo.setConfig(config);
+		console.log(`> Set config ${JSON.stringify(state.extras)}`);
+		const liteGeolocationLocation = {
+			timestamp: new Date(),
+			coords: {latitude: 1, longitude: 2, altitude: 3},
+			extras: state.extras
+		};
+		await geo.insertLocation(liteGeolocationLocation);
+		console.log(`> Inserted location`);
 	}
 
-	$scope.continue = async function() {
-		let state = await geo.ready(); // Intentionally empty
-		console.log(`>> Ready ${state.enabled} ${JSON.stringify(state.extras)}`);
-		$scope.listenToLocation();
-	};
-
 	$scope.stop = async function() {
-		let state = await geo.ready(); // Intentionally empty
-		console.log(`>> Ready ${state.enabled} ${JSON.stringify(state.extras)}`);
-		$scope.listenToLocation();
+		// Stop tracking
 		await geo.stop();
+		console.log(`>> Stopped`);
 	};
 
 	$scope.listenToLocation = function() {
@@ -47,27 +69,6 @@ app.controller('PageController', function($scope) {
 			console.debug(`onLocation: ${loc.timestamp.toLocaleTimeString()} ${JSON.stringify(loc.extras)}`);
 		});
 		console.log('>> Listening to onLocation');
-	};
-
-	$scope.changeRouteId = async function() {
-		priv.config.extras.routeId = uuid.v4();
-		await geo.reset(priv.config);
-		console.log(`>> Update route ID: ${priv.config.extras.routeId}`);
-	};
-
-	$scope.insertLocation = async function() {
-		const timestamp = new Date();
-		const liteGeolocationLocation = {
-			timestamp: timestamp,
-			coords: {
-				latitude: 1,
-				longitude: 2,
-				altitude: 3
-			},
-			extras: priv.config.extras
-		};
-		await geo.insertLocation(liteGeolocationLocation);
-		console.log('>> Inserted location');
 	};
 
 	$scope.printLocations = function() {
