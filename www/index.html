@@ -23,6 +23,7 @@
 		<script src="js/lib/jquery.min.js"></script>
 		<script src="js/lib/onsenui.min.js"></script>
 		<script src="js/lib/angularjs-onsenui.min.js"></script>
+		<script src="js/lib/uuid.min.js"></script>
 
 		<script src="js/app.js" defer></script>
 	</head>
@@ -32,12 +33,20 @@
 				<div class="center">Title</div>
 			</ons-toolbar>
 			<p style="text-align: center;">
-				<ons-button ng-click="ready()">
-					ready
+				<ons-button ng-click="start()">
+					Start
 				</ons-button>
-				<ons-button ng-click="test()">
-					test
+				<ons-button ng-click="pause()">
+					Pause
 				</ons-button>
+				<ons-button ng-click="continue()">
+					Continue
+				</ons-button>
+				<ons-button ng-click="stop()">
+					Stop
+				</ons-button>
+			</p>
+			<p style="text-align: center;">
 			</p>
 		</ons-page>
 	</body>
